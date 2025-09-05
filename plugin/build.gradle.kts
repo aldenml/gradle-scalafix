@@ -38,7 +38,6 @@ gradlePlugin {
     }
 }
 
-// Add a source set for the functional test suite
 val functionalTestSourceSet =
     sourceSets.create("functionalTest") {
     }

@@ -6,6 +6,7 @@ package com.maindx.gradle.scalafix
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.FileType
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
@@ -76,6 +77,7 @@ abstract class ScalafixTask : DefaultTask() {
         val sourcePaths = getSourcePaths(inputChanges)
         if (sourcePaths.isEmpty()) {
             logger.debug("No changed Scala source files found - skipping Scalafix")
+            return
         }
 
         logger.debug(
@@ -131,13 +133,15 @@ abstract class ScalafixTask : DefaultTask() {
             Mode.CHECK -> ScalafixMainMode.CHECK
         }
 
-    private fun getSourcePaths(inputChanges: InputChanges): List<Path?> =
+    private fun getSourcePaths(inputChanges: InputChanges): List<Path> =
         if (inputChanges.isIncremental) {
-            // Only process changed/added files
+            // only process changed/added scala files
             val changedFiles =
                 inputChanges
                     .getFileChanges(sourceFiles)
                     .filter { it.changeType != ChangeType.REMOVED }
+                    .filter { it.fileType == FileType.FILE }
+                    .filter { it.file.name.endsWith(".scala") }
                     .map { it.file.toPath() }
 
             if (changedFiles.isNotEmpty()) {
@@ -146,7 +150,7 @@ abstract class ScalafixTask : DefaultTask() {
 
             changedFiles
         } else {
-            // Full rebuild - process all files
+            // full rebuild - process all files
             logger.debug("Full rebuild - processing all Scala source files")
             sourceFiles.files.map { it.toPath() }
         }
