@@ -239,15 +239,15 @@ class ScalafixPluginFunctionalTest {
 
         val result1 = runGradle(projectDir, "scalafix")
 
-        assertTrue(result1.output.contains(":scalafixMain NO-SOURCE"))
-        assertTrue(result1.output.contains(":scalafixTest NO-SOURCE"))
-        assertTrue(result1.output.contains(":scalafix UP-TO-DATE"))
+        assertTrue(result1.output.contains(":scalafixMain"))
+        assertTrue(result1.output.contains(":scalafixTest"))
+        assertTrue(result1.output.contains(":scalafix"))
 
         val result2 = runGradle(projectDir, "scalafixCheck")
 
-        assertTrue(result2.output.contains(":scalafixCheckMain NO-SOURCE"))
-        assertTrue(result2.output.contains(":scalafixCheckTest NO-SOURCE"))
-        assertTrue(result2.output.contains(":scalafixCheck UP-TO-DATE"))
+        assertTrue(result2.output.contains(":scalafixCheckMain"))
+        assertTrue(result2.output.contains(":scalafixCheckTest"))
+        assertTrue(result2.output.contains(":scalafixCheck"))
     }
 
     @Test

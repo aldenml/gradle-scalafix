@@ -4,3 +4,4 @@
 
 rootProject.name = "gradle-scalafix"
 include("plugin")
+project(":plugin").name = "gradle-scalafix-plugin"

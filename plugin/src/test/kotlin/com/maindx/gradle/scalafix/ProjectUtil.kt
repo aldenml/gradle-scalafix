@@ -61,4 +61,7 @@ fun createSrcFile(
     file.writeText(content)
 }
 
-fun Task.dependsOnTask(taskName: String): Boolean = dependsOn.any { (it is TaskProvider<*>) && it.name == taskName }
+fun Task.dependsOnTask(taskName: String): Boolean =
+    dependsOn.any {
+        ((it is TaskProvider<*>) && it.name == taskName) || (it is Task && it.name == taskName)
+    }
