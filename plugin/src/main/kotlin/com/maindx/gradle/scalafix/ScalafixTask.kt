@@ -16,17 +16,18 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.OutputFiles
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
-import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 import org.gradle.work.ChangeType
+import org.gradle.work.Incremental
 import org.gradle.work.InputChanges
 import scalafix.interfaces.Scalafix
 import scalafix.interfaces.ScalafixMainMode
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.writeText
 
 @CacheableTask
 abstract class ScalafixTask : DefaultTask() {
@@ -43,7 +44,7 @@ abstract class ScalafixTask : DefaultTask() {
     abstract val sourceRoot: Property<String>
 
     @get:InputFiles
-    @get:SkipWhenEmpty
+    @get:Incremental
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val sourceFiles: ConfigurableFileCollection
 
@@ -65,18 +66,18 @@ abstract class ScalafixTask : DefaultTask() {
     @get:Optional
     abstract val compileOptions: ListProperty<String>
 
-    @get:OutputFiles
-    abstract val outputFiles: ConfigurableFileCollection
+    @get:OutputFile
+    abstract val outputFile: RegularFileProperty
 
     @TaskAction
     fun run(inputChanges: InputChanges) {
-        val scalafixCliArtifact = ScalafixInterfaces.getScalafixCliArtifact()
         val scalafixMode = getScalafixMode()
         val configFilePath = java.util.Optional.ofNullable(configFile.orNull?.asFile?.toPath())
 
         val sourcePaths = getSourcePaths(inputChanges)
         if (sourcePaths.isEmpty()) {
             logger.debug("No changed Scala source files found - skipping Scalafix")
+            writeOutput("no-sources")
             return
         }
 
@@ -94,7 +95,7 @@ abstract class ScalafixTask : DefaultTask() {
             """.trimIndent(),
         )
 
-        val scalafixClassloader = ScalafixInterfaces.getScalafixCliClassloader(scalafixCliArtifact, cliJars.files)
+        val scalafixClassloader = ScalafixInterfaces.getScalafixCliClassloader(cliJars.files)
 
         val scalafixArgs =
             Scalafix
@@ -118,6 +119,16 @@ abstract class ScalafixTask : DefaultTask() {
 
         if (scalafixArgs.rulesThatWillRun().isNotEmpty()) {
             logger.debug("Running Scalafix on ${sourcePaths.size} Scala source file(s)")
+
+            writeOutput(
+                buildString {
+                    appendLine("mode:${mode.get()}")
+                    appendLine("config:$configFilePath")
+                    appendLine("source_paths_count:${sourcePaths.size}")
+                    sourcePaths.forEach { appendLine("source_path:$it") }
+                },
+            )
+
             val errors = scalafixArgs.run()
             if (errors.size > 0) {
                 throw ScalafixException(errors)
@@ -132,6 +143,10 @@ abstract class ScalafixTask : DefaultTask() {
             Mode.FIX -> ScalafixMainMode.IN_PLACE
             Mode.CHECK -> ScalafixMainMode.CHECK
         }
+
+    private fun writeOutput(content: String) {
+        outputFile.asFile.get().writeText(content)
+    }
 
     private fun getSourcePaths(inputChanges: InputChanges): List<Path> =
         if (inputChanges.isIncremental) {

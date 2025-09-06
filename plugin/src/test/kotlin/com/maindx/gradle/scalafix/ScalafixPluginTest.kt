@@ -79,8 +79,8 @@ class ScalafixPluginTest {
         scalaProject.evaluate()
 
         val task = scalaProject.tasks.getByName("scalafixCheckMain")
-        task.dependsOnTask("compileScala")
-        task.dependsOnTask("scalafix")
+        assertTrue(task.dependsOnTask("compileScala"))
+        assertFalse(task.dependsOnTask("scalafix"))
 
         assertTrue(task is ScalafixTask)
         assertEquals(ScalafixTask.Mode.CHECK, task.mode.get())
@@ -104,8 +104,7 @@ class ScalafixPluginTest {
         scalaProject.evaluate()
 
         val task = scalaProject.tasks.getByName("scalafixCheckTest")
-        task.dependsOnTask("compileTestScala")
-        task.dependsOnTask("scalafix")
+        assertTrue(task.dependsOnTask("compileTestScala"))
 
         assertTrue(task is ScalafixTask)
         assertEquals(ScalafixTask.Mode.CHECK, task.mode.get())
@@ -143,8 +142,7 @@ class ScalafixPluginTest {
         scalaProject.evaluate()
 
         val task = scalaProject.tasks.getByName("scalafixMain")
-        task.dependsOnTask("compileScala")
-        task.dependsOnTask("scalafix")
+        assertTrue(task.dependsOnTask("compileScala"))
 
         assertTrue(task is ScalafixTask)
         assertEquals(ScalafixTask.Mode.FIX, task.mode.get())
@@ -168,8 +166,7 @@ class ScalafixPluginTest {
         scalaProject.evaluate()
 
         val task = scalaProject.tasks.getByName("scalafixTest")
-        task.dependsOnTask("compileTestScala")
-        task.dependsOnTask("scalafix")
+        assertTrue(task.dependsOnTask("compileTestScala"))
 
         assertTrue(task is ScalafixTask)
         assertEquals(ScalafixTask.Mode.FIX, task.mode.get())

@@ -16,6 +16,8 @@ import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.scala.ScalaCompile
 import java.io.File
+import kotlin.io.path.Path
+import kotlin.io.path.pathString
 
 class ScalafixPlugin : Plugin<Project> {
     override fun apply(project: Project) {
@@ -62,12 +64,15 @@ class ScalafixPlugin : Plugin<Project> {
             if (scalaCompileTask != null) {
                 configureScalaCompileTask(extension, project, scalaCompileTask)
 
+                val cliJars = findCliJars(project)
+
                 configureScalafixTaskForSourceSet(
                     project,
                     sourceSet,
                     ScalafixTask.Mode.FIX,
                     fixTask.get(),
                     scalaCompileTask,
+                    cliJars,
                     extension,
                 )
                 configureScalafixTaskForSourceSet(
@@ -76,6 +81,7 @@ class ScalafixPlugin : Plugin<Project> {
                     ScalafixTask.Mode.CHECK,
                     checkTask.get(),
                     scalaCompileTask,
+                    cliJars,
                     extension,
                 )
             } else {
@@ -118,6 +124,7 @@ class ScalafixPlugin : Plugin<Project> {
         mode: ScalafixTask.Mode,
         parentTask: Task,
         scalaCompileTask: ScalaCompile,
+        cliJars: Set<File>,
         extension: ScalafixExtension,
     ) {
         val scalafixTaskName = parentTask.name + sourceSet.name.capitalize()
@@ -126,7 +133,7 @@ class ScalafixPlugin : Plugin<Project> {
                 task.group = parentTask.group
                 task.description = "${parentTask.description} in '${sourceSet.name}'"
 
-                task.cliJars.from(findCliJars(project))
+                task.cliJars.from(cliJars)
                 task.configFile.set(extension.configFile)
 
                 val scalaSourceSet = sourceSet.extensions.findByType(ScalaSourceDirectorySet::class.java)
@@ -142,7 +149,11 @@ class ScalafixPlugin : Plugin<Project> {
                         }
 
                     task.sourceFiles.from(scalaSources)
-                    task.outputFiles.from(scalaSources)
+                    task.outputFile.set(
+                        project.layout.buildDirectory.file(
+                            Path("scalafix", "$scalafixTaskName-state.txt").pathString,
+                        ),
+                    )
                 } else {
                     throw GradleException("No scala source directory set found for source set '${sourceSet.name}'")
                 }

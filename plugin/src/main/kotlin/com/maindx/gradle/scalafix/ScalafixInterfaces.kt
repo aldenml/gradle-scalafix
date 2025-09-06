@@ -8,12 +8,11 @@ import scalafix.internal.interfaces.ScalafixInterfacesClassloader
 import java.io.File
 import java.net.URLClassLoader
 import java.util.Properties
-import java.util.concurrent.ConcurrentHashMap
 
 object ScalafixInterfaces {
     val scalafixProperties: Properties by lazy {
         val props = Properties()
-        ScalafixTask::class.java.classLoader.getResourceAsStream("scalafix-interfaces.properties")?.use {
+        ScalafixInterfaces::class.java.classLoader.getResourceAsStream("scalafix-interfaces.properties")?.use {
             props.load(it)
         }
         props
@@ -26,15 +25,10 @@ object ScalafixInterfaces {
     @Suppress("MaxLineLength")
     fun getScalafixCliArtifact(): String = "ch.epfl.scala:scalafix-cli_${getScala3LTSVersion()}:${getScalafixStableVersion()}"
 
-    private val classLoaderCache = ConcurrentHashMap<String, ClassLoader>()
+    private val scalafixInterfacesClassloader by lazy { ScalafixInterfacesClassloader(javaClass.classLoader) }
 
-    fun getScalafixCliClassloader(
-        key: String,
-        jarFiles: Set<File>,
-    ): ClassLoader =
-        classLoaderCache.computeIfAbsent(key) {
-            val parentClassloader = ScalafixInterfacesClassloader(javaClass.classLoader)
-            val urls = jarFiles.map { it.toURI().toURL() }.toTypedArray()
-            URLClassLoader(urls, parentClassloader)
-        }
+    fun getScalafixCliClassloader(jarFiles: Set<File>): ClassLoader {
+        val urls = jarFiles.map { it.toURI().toURL() }.toTypedArray()
+        return URLClassLoader(urls, scalafixInterfacesClassloader)
+    }
 }

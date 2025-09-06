@@ -90,7 +90,7 @@ The plugin defines the `scalafix` extension which enables some customizations:
 | `semanticdb`  | `Property<Boolean>`   | Used to specify if semanticdb generation is enabled.                                                                                |
 
 Example:
-```hocon
+```groovy
 scalafix {
     configFile = file("other/customcalafix.conf")
     includes = ["**/*Foo.scala"]

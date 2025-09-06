@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "com.maindx.gradle"
-version = "0.1.0"
+version = "0.1.1"
 
 repositories {
     mavenCentral()
@@ -38,9 +38,7 @@ gradlePlugin {
     }
 }
 
-val functionalTestSourceSet =
-    sourceSets.create("functionalTest") {
-    }
+val functionalTestSourceSet = sourceSets.create("functionalTest")
 
 configurations["functionalTestImplementation"].extendsFrom(configurations["testImplementation"])
 configurations["functionalTestRuntimeOnly"].extendsFrom(configurations["testRuntimeOnly"])
