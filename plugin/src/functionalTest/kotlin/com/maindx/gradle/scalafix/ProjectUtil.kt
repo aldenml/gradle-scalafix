@@ -64,12 +64,27 @@ fun createScalafixConfig(
 fun runGradle(
     projectDir: Path,
     vararg arguments: String,
+    gradleVersion: String? = null,
 ): BuildResult {
     val runner = GradleRunner.create()
     runner.forwardOutput()
     runner.withPluginClasspath()
     runner.withArguments(arguments.toList() + "--configuration-cache")
     runner.withProjectDir(projectDir.toFile())
+
+    if (gradleVersion != null) {
+        runner.withGradleVersion(gradleVersion)
+    }
+
     val result = runner.build()
     return result
 }
+
+fun runGradleWithVersions(
+    projectDir: Path,
+    arguments: List<String>,
+    versions: List<String>,
+): Map<String, BuildResult> =
+    versions.associateWith { version ->
+        runGradle(projectDir, *arguments.toTypedArray(), gradleVersion = version)
+    }

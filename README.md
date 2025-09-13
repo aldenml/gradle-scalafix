@@ -14,7 +14,7 @@ Key Features:
 - Customizable settings through the plugin extension.
 - Scalafix tasks are properly integrated into your build lifecycle.
 - Automatically processes all configured Scala source sets.
-- Requires Gradle 9.0.0 or later.
+- Requires Gradle 8.14.3 or later.
 
 ## Usage
 
