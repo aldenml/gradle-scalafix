@@ -33,37 +33,7 @@ fun buildScalaProject(
         repositories.mavenCentral()
 
         extensions.configure(ScalaPluginExtension::class.java) { extension ->
-            // Try to set scala version using reflection to handle API changes
-            try {
-                val methods = extension.javaClass.methods
-                when {
-                    methods.any { it.name == "getScalaCompilerVersion" } -> {
-                        val method = extension.javaClass.getMethod("getScalaCompilerVersion")
-                        @Suppress("UNCHECKED_CAST")
-                        (method.invoke(extension) as? org.gradle.api.provider.Property<String>)?.set(withScalaVersion)
-                    }
-                    methods.any { it.name == "getScalaVersion" } -> {
-                        val method = extension.javaClass.getMethod("getScalaVersion")
-                        @Suppress("UNCHECKED_CAST")
-                        (method.invoke(extension) as? org.gradle.api.provider.Property<String>)?.set(withScalaVersion)
-                    }
-                    else -> {
-                        // Try direct property access as fallback
-                        try {
-                            val field = extension.javaClass.getDeclaredField("scalaVersion")
-                            field.isAccessible = true
-                            @Suppress("UNCHECKED_CAST")
-                            (field.get(extension) as? org.gradle.api.provider.Property<String>)?.set(withScalaVersion)
-                        } catch (e: Exception) {
-                            // If all fails, just ignore and let tests use default scala version
-                            println("Could not set scala version via field access: ${e.message}")
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                // If reflection fails, ignore and use default
-                println("Could not set scala version via reflection: ${e.message}")
-            }
+            extension.scalaVersion.set(withScalaVersion)
         }
 
         tasks.withType(ScalaCompile::class.java) {

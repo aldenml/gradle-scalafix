@@ -176,51 +176,11 @@ class ScalafixPlugin : Plugin<Project> {
 
     private fun isScalaPluginPresent(project: Project) = project.plugins.hasPlugin(ScalaPlugin::class.java)
 
-    private fun getScalaVersion(project: Project): String? {
-        val scalaExtension = project.extensions.findByType(ScalaPluginExtension::class.java)
-        return scalaExtension?.let { extension ->
-            try {
-                // Try reflection to find available scala version properties
-                val methods =
-                    extension.javaClass.methods
-                        .filter {
-                            it.name.contains("scala", ignoreCase = true) &&
-                                it.name.contains("version", ignoreCase = true)
-                        }
-
-                // Try common property names
-                when {
-                    methods.any { it.name == "getScalaCompilerVersion" } -> {
-                        val method = extension.javaClass.getMethod("getScalaCompilerVersion")
-                        @Suppress("UNCHECKED_CAST")
-                        (method.invoke(extension) as? org.gradle.api.provider.Property<String>)?.orNull
-                    }
-                    methods.any { it.name == "getScalaVersion" } -> {
-                        val method = extension.javaClass.getMethod("getScalaVersion")
-                        @Suppress("UNCHECKED_CAST")
-                        (method.invoke(extension) as? org.gradle.api.provider.Property<String>)?.orNull
-                    }
-                    else -> {
-                        // If we can't find a scala version property, return null for now
-                        // This will make isScala3 return false, which should be safe
-                        null
-                    }
-                }
-            } catch (e: NoSuchMethodException) {
-                // Method not found, return null
-                project.logger.debug("Scala version method not found: ${e.message}")
-                null
-            } catch (e: IllegalAccessException) {
-                // Cannot access method, return null
-                project.logger.debug("Cannot access scala version method: ${e.message}")
-                null
-            } catch (e: java.lang.reflect.InvocationTargetException) {
-                // Method invocation failed, return null
-                project.logger.debug("Scala version method invocation failed: ${e.message}")
-                null
-            }
-        }
-    }
+    private fun getScalaVersion(project: Project): String? =
+        project.extensions
+            .findByType(ScalaPluginExtension::class.java)
+            ?.scalaVersion
+            ?.orNull
 
     private fun isScala3(project: Project): Boolean {
         val scalaVersion = getScalaVersion(project)
